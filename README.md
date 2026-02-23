@@ -1,76 +1,87 @@
 # AI Logic Programming Evaluator
 
-This project is a Streamlit-based dashboard designed to evaluate the performance of various Generative AI models when prompted to write logic programming code (specifically Prolog).
+A Streamlit-based dashboard for evaluating how well various Generative AI models write logic programming code (Prolog). Compare outputs side-by-side, run Prolog queries live, and evaluate the generated code with a second AI model — all from one interface.
 
 ## Features
 
-- **Multi-Model Support**: Evaluate state-of-the-art models including:
-  - Claude 3.5 Sonnet
-  - Gemini 2.0 Flash
-  - DeepSeek R1 & DeepSeek R1 Distill 70B
-  - ChatGPT (GPT-3.5)
-- **Unified API Routing**: All model requests are routed cleanly through the OpenRouter API key.
+- **Side-by-Side Comparison**: Select up to **2 models** simultaneously. Outputs, metrics, and test results are displayed in parallel columns for instant comparison.
+- **Async Generation**: When comparing two models, API calls are dispatched concurrently via `asyncio` for faster results.
+- **Multi-Model Support**: All models are routed through the OpenRouter API. Add or remove models at any time via the built-in model manager.
 - **Detailed Metrics**: Every generation tracks:
   - **Time Taken**: Execution speed of the API call.
-  - **Token Usage**: Both prompt and completion tokens.
-  - **Readability**: Calculates a Flesch Reading Ease score for generated Prolog comments (`%` and `/* */`) using the `textstat` library.
-- **Session History**: A collapsible sidebar keeps a log of all prompts, models, and metrics used during your current session.
-- **Prolog Export**: Easily download the generated text as a `.pl` file, or rely on the automatic save to `generated_code.pl` in the project folder.
-- **Test Generated Code**: Run Prolog queries directly from the UI using `pyswip`. The app connects to your local SWI-Prolog installation to evaluate the logic and return variable bindings instantly.
+  - **Token Usage**: Input and output token counts.
+  - **Readability**: Flesch Reading Ease score for generated Prolog comments using `textstat`.
+- **Live Prolog Testing**: Run Prolog queries directly from the UI using `pyswip`. Each model's output gets its own independent query input and results area.
+- **Dual Evaluator Support**: Select up to 2 evaluator models to assess the generated code side-by-side, with async concurrent evaluation.
+- **Static Analysis Security**: Generated code is scanned for dangerous patterns (shell commands, file I/O, `halt`, etc.) before execution — blocking unsafe operations while allowing standard Prolog I/O.
+- **Session History**: A collapsible sidebar logs all prompts, models, and metrics. Download any past output as a `.pl` file.
+- **Session Isolation**: Each browser session gets a unique ID, so multiple users can run queries concurrently without interference.
 
 ## Prerequisites
 
 - Python 3.13+
 - An [OpenRouter API Key](https://openrouter.ai/)
-- SWI-Prolog (`swipl`) installed on your system (Required for backend query evaluation via PySwip).
+- SWI-Prolog (`swipl`) installed on your system (required for query evaluation via PySwip)
 
 ## Setup Instructions
 
-1. **Clone or Download the Repository**
-2. **Create a Virtual Environment**: It is highly recommended to isolate your dependencies.
+1. **Clone the Repository**
+   ```bash
+   git clone <repo-url> && cd PrologEval
+   ```
+
+2. **Create a Virtual Environment**
    ```bash
    python3 -m venv .venv
    source .venv/bin/activate
    ```
-3. **Install Dependencies**:
+
+3. **Install Dependencies**
    ```bash
    pip install -r requirements.txt
    ```
-4. **Configure Environment Variables**:
-   Create a `.env` file in the root directory and add your OpenRouter key:
+
+4. **Configure Environment Variables**
+   Create a `.env` file in the root directory:
    ```env
    OPENROUTER_API_KEY="your_openrouter_api_key_here"
    ```
 
 ## Usage
 
-1. Activate your virtual environment: 
+1. Activate your virtual environment:
    ```bash
    source .venv/bin/activate
    ```
-2. Start the Streamlit application:
+2. Start the application:
    ```bash
    streamlit run main.py
    ```
-3. Open your browser and navigate to the URL provided in the terminal.
+3. Open the URL shown in the terminal.
 4. Enter a custom prompt or choose from the suggested list.
-5. Select a model and click "Generate Output".
+5. Select 1 or 2 models and click **Generate Output**.
+6. Test the generated code with Prolog queries directly in the UI.
+7. Optionally evaluate the output using 1 or 2 evaluator models.
 
 ## Project Structure
 
-- `core/`: Python backend and utility scripts.
-  - `llm_service.py`: API communication with OpenRouter and text analytics.
-  - `prolog_evaluator.py`: PySwip Prolog engine instance and query execution.
-  - `utils.py`: General utility functions.
-- `frontend/`: UI logic.
-  - `ui.py`: Streamlit rendering components.
-- `config/`: Configuration files.
-  - `config.yaml`: Centralized configuration for file paths.
-  - `models.xml`: Dynamic OpenRouter model mappings.
-- `prompts/`: Text file templates for LLMs.
-  - `prompt.txt`: Suggested prompts for the UI.
-  - `modified_prompt.txt`: Template to wrap user input before querying.
-  - `evaluation_prompt.txt`: Template for evaluating the generated output.
-- `temp/`: Temporary session-specific generated Prolog files (`*.pl`).
-- `main.py`: The entry point for the Streamlit application.
-- `requirements.txt`: Python package dependencies.
+```
+PrologEval/
+├── core/                     # Python backend logic
+│   ├── llm_service.py        #   Async OpenRouter API client & text analytics
+│   ├── prolog_evaluator.py   #   PySwip engine, static analysis & query execution
+│   └── utils.py              #   Config loading, XML parsing, file helpers
+├── frontend/                 # Streamlit UI
+│   └── ui.py                 #   All rendering: sidebar, model selection, outputs
+├── config/                   # Configuration
+│   ├── config.yaml           #   Centralized path settings
+│   └── models.xml            #   Dynamic OpenRouter model mappings
+├── prompts/                  # LLM prompt templates
+│   ├── prompt.txt            #   Suggested prompts for the UI
+│   ├── modified_prompt.txt   #   Wrapper template for user input
+│   └── evaluation_prompt.txt #   Template for AI-based code evaluation
+├── temp/                     # Session-specific generated .pl files
+├── main.py                   # Entry point
+├── requirements.txt          # Dependencies
+└── .gitignore
+```
