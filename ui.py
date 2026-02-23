@@ -1,6 +1,6 @@
 import streamlit as st
 import utils
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Callable
 from llm_service import generate_openrouter_response
 from prolog_evaluator import extract_prolog_code, save_generated_code, run_prolog_query
 
@@ -49,10 +49,45 @@ def display_user_input(suggested_prompts: List[str], prompt_template: str) -> Tu
     
     return user_prompt, manipulated_prompt
 
-def display_model_selection(available_models: Dict[str, str]) -> str:
+@st.dialog("Manage Models")
+def manage_models_dialog(available_models: Dict[str, str], on_change_callback: Callable) -> None:
+    tab1, tab2 = st.tabs(["Add New", "Remove"])
+    
+    with tab1:
+        st.write("Add a custom model from OpenRouter.")
+        name = st.text_input("Name:", placeholder="Llama 3")
+        model_id = st.text_input("OpenRouter ID:", placeholder="meta-llama/llama-3-8b")
+        if st.button("Save New Model"):
+            if name and model_id:
+                available_models[name] = model_id
+                on_change_callback(available_models)
+                st.success(f"Added {name}!")
+                st.rerun()
+            else:
+                st.error("Please fill out both fields.")
+                
+    with tab2:
+        st.write("Select a model to remove from the list.")
+        model_to_remove = st.selectbox("Select model:", [""] + list(available_models.keys()))
+        if st.button("Delete Selected Model", type="primary"):
+            if model_to_remove and str(model_to_remove) in available_models: 
+                name_ref = str(model_to_remove)
+                del available_models[name_ref]
+                on_change_callback(available_models)
+                st.rerun()
+            else:
+                st.warning("Please select a valid model to remove.")
+
+def display_model_selection(available_models: Dict[str, str], on_change_callback: Callable) -> str:
     """Renders the AI model radio selection."""
     st.subheader("Select a Generative AI Model")
-    return st.radio("Choose a model:", list(available_models.keys())) # type: ignore
+    
+    selected = st.radio("Choose a model:", list(available_models.keys())) # type: ignore
+
+    if st.button("Manage Models", icon="⚙️", help="Add or remove models from your configuration"):
+        manage_models_dialog(available_models, on_change_callback)
+            
+    return str(selected)
 
 def handle_generation(user_prompt: str, manipulated_prompt: str, selected_model: str, available_models: Dict[str, str], generated_code_path: str) -> None:
     """Handles the Generation button click and updates session state."""
@@ -128,11 +163,15 @@ def display_test_generated_code(generated_code_path: str) -> None:
         else:
             st.warning("Please enter a query first.")
 
-def handle_evaluation(evaluation_template: str, available_models: Dict[str, str]) -> None:
+def handle_evaluation(evaluation_template: str, available_models: Dict[str, str], on_change_callback: Callable) -> None:
     """Handles the evaluation prompt logic for a second LLM query."""
     st.divider()
     st.subheader("Evaluate the AI Output")
+    
     selected_evaluator = st.radio("Choose an evaluator model:", list(available_models.keys())) # type: ignore
+    
+    if st.button("Manage Models", icon="⚙️", help="Add or remove models from your configuration", key="eval_manage_btn"):
+        manage_models_dialog(available_models, on_change_callback)
 
     if st.button("Evaluate Output"):
         if not st.session_state.generated_text:

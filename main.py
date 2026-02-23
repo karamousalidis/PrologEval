@@ -19,8 +19,18 @@ if "generated_text" not in st.session_state:
 try:
     # Load configurations
     config = utils.load_config()
-    available_models = config.get("models", {})
     paths = config.get("paths", {})
+    
+    # Load dynamic models from XML
+    models_xml_path = paths.get("models_xml", "models.xml")
+    if "available_models" not in st.session_state:
+        st.session_state.available_models = utils.load_models_xml(models_xml_path)
+    available_models = st.session_state.available_models
+    
+    def update_models(new_models: dict) -> None:
+        """Callback to save models and update state."""
+        st.session_state.available_models = new_models
+        utils.save_models_xml(new_models, models_xml_path)
     
     # Load required file text data
     prompt_file_path = paths.get("prompt", "prompt.txt")
@@ -44,7 +54,7 @@ ui.display_sidebar()
 
 user_prompt, manipulated_prompt = ui.display_user_input(suggested_prompts, prompt_template)
 
-selected_model = ui.display_model_selection(available_models)
+selected_model = ui.display_model_selection(available_models, update_models)
 
 ui.handle_generation(user_prompt, manipulated_prompt, selected_model, available_models, generated_code_path)
 
@@ -52,4 +62,4 @@ ui.display_metrics_and_output()
 
 ui.display_test_generated_code(generated_code_path)
 
-ui.handle_evaluation(evaluation_template, available_models)
+ui.handle_evaluation(evaluation_template, available_models, update_models)
