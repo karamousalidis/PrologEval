@@ -126,6 +126,9 @@ def handle_generation(user_prompt: str, manipulated_prompt: str, selected_model:
 
 def display_metrics_and_output() -> None:
     """Renders the generation metrics and generated output text area."""
+    if not st.session_state.generated_text:
+        return
+
     if "metrics" in st.session_state:
         cols = st.columns(4)
         cols[0].metric("Time Taken", f"{st.session_state.metrics['time_taken']:.2f}s")
@@ -137,18 +140,21 @@ def display_metrics_and_output() -> None:
             r_score = f"{r_score:.2f}"
         cols[3].metric("Comment Readability", r_score)
 
-    st.text_area("Generated Output:", st.session_state.generated_text, height=400, disabled=True)
+    st.write("**Generated Output:**")
+    st.code(st.session_state.generated_text, language="prolog")
 
-    if st.session_state.generated_text:
-        st.download_button(
-            label="Download Prolog Code",
-            data=st.session_state.generated_text,
-            file_name="generated_code.pl",
-            mime="text/plain"
-        )
+    st.download_button(
+        label="Download Prolog Code",
+        data=st.session_state.generated_text,
+        file_name="generated_code.pl",
+        mime="text/plain"
+    )
 
 def display_test_generated_code(generated_code_path: str) -> None:
     """Renders the PySwip testing section."""
+    if not st.session_state.generated_text:
+        return
+
     st.subheader("Test Generated Code")
     user_query = st.text_input("Enter a Prolog query (e.g., member(X, [1, 2, 3])):")
     
