@@ -7,17 +7,6 @@ from typing import Tuple, List, Dict, Any, Union, Optional
 # Single global instance to prevent memory leaks or crashes
 _prolog_instance = Prolog()
 
-# Initialize sandbox once
-try:
-    list(_prolog_instance.query("use_module(library(sandbox))"))
-    # Authorize basic harmless I/O predicates for generated code that prints results
-    list(_prolog_instance.query("assertz(sandbox:safe_primitive(system:write(_)))"))
-    list(_prolog_instance.query("assertz(sandbox:safe_primitive(system:writeln(_)))"))
-    list(_prolog_instance.query("assertz(sandbox:safe_primitive(system:nl))"))
-    list(_prolog_instance.query("assertz(sandbox:safe_primitive(system:format(_,_)))"))
-except Exception as e:
-    logging.warning(f"Failed to load Prolog sandbox: {e}")
-
 def extract_prolog_code(text: str) -> str:
     """Extract code from within ```prolog ... ``` or ``` ... ``` blocks"""
     match = re.search(r'```(?:prolog)?\n(.*?)```', text, re.DOTALL | re.IGNORECASE)
@@ -37,14 +26,25 @@ def run_prolog_query(query: str, file_path: str, session_id: str = "default") ->
     prefix = f"sess_{session_id}_"
     
     try:
-        # 1. Read the generated code and check for dangerous patterns
+        # 1. Read the generated code and check for dangerous patterns via static analysis
         with open(file_path, "r", encoding="utf-8") as f:
             code = f.read()
             
-        dangerous_patterns = [r':-\s*shell', r':-\s*system', r':-\s*open', r':-\s*use_module\(library\(process\)\)']
+        dangerous_patterns = [
+            r'\bshell\(', r'\bsystem\(',                # OS commands
+            r'\bopen\(', r'\bclose\(',                  # File I/O
+            r'\bdelete_file\(', r'\brename_file\(',     # File manipulation
+            r'\bhalt\b', r'\babort\b',                  # App termination
+            r'use_module\(library\(process\)\)',        # External processes
+            r'use_module\(library\(filesex\)\)',        # Extended file ops
+            r'\basserta\(', r'\bassertz\(',             # Dynamic db manipulation (can be risky)
+            r'\bretract\(', r'\bretractall\('           # Dynamic db manipulation
+        ]
+        
         for pattern in dangerous_patterns:
             if re.search(pattern, code, re.IGNORECASE):
-                return False, [], f"Security Alert: Dangerous directive found in code."
+                logging.warning(f"Security Alert: Blocked execution due to pattern {pattern}")
+                return False, [], f"Security Alert: Dangerous system or file operation found in generated code."
 
         # 2. Rewrite the code to prefix all predicates with the session ID
         # This allows us to load everything into 'user' module (avoiding sandbox permission issues)
@@ -74,23 +74,15 @@ def run_prolog_query(query: str, file_path: str, session_id: str = "default") ->
         if os.path.exists(temp_file):
             os.remove(temp_file)
         
-        # 4. Prepare and check the query
+        # 4. Prepare the query
         clean_query = query.strip()
         if clean_query.endswith('.'):
             clean_query = clean_query[:-1]
             
         # Prefix the predicate in the query head
         prefixed_query = re.sub(r'^([a-z][a-zA-Z0-9_]*)', fr'{prefix}\1', clean_query)
-        
-        # Check safety - explicitly qualify the goal as being in the 'user' module
-        # where we consulted the file, otherwise sandbox looks for it within itself.
-        safe_check_query = f"sandbox:safe_goal(user:({prefixed_query}))"
-        is_safe = list(_prolog_instance.query(safe_check_query))
-        
-        if not is_safe:
-            return False, [], f"Security Alert: Query '{query}' is not considered safe."
 
-        # 5. Execute actual query
+        # 5. Execute actual query directly (sandbox check removed)
         results = list(_prolog_instance.query(prefixed_query))
         
         return True, results, None

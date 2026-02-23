@@ -7,9 +7,9 @@ import openai
 import textstat
 
 # Initialize OpenRouter Client
-def get_client() -> openai.OpenAI:
+def get_async_client() -> openai.AsyncOpenAI:
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-    return openai.OpenAI(
+    return openai.AsyncOpenAI(
         base_url="https://openrouter.ai/api/v1",
         api_key=OPENROUTER_API_KEY
     )
@@ -22,12 +22,12 @@ def extract_prolog_comments(text: str) -> str:
     all_comments = " ".join(single_line_comments) + " " + " ".join(block_comments)
     return all_comments.strip()
 
-def generate_openrouter_response(model_id: str, prompt: str) -> Dict[str, Any]:
-    """Generates a response from OpenRouter and calculates metrics."""
-    client = get_client()
+async def generate_openrouter_response_async(model_id: str, prompt: str) -> Dict[str, Any]:
+    """Generates an asynchronous response from OpenRouter."""
+    client = get_async_client()
     try:
         start_time = time.time()
-        completion = client.chat.completions.create(
+        completion = await client.chat.completions.create(
             model=model_id,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -50,5 +50,5 @@ def generate_openrouter_response(model_id: str, prompt: str) -> Dict[str, Any]:
             "readability_score": readability
         }
     except Exception as e:
-        logging.error(f"Error generating OpenRouter response: {e}", exc_info=True)
+        logging.error(f"Error generating OpenRouter response (async): {e}", exc_info=True)
         return {"error": f"Error generating response: {str(e)}"}
