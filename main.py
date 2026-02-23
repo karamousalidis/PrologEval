@@ -15,8 +15,6 @@ st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 # Initialize Session History
 if "history" not in st.session_state:
     st.session_state.history = []
-if "generated_text" not in st.session_state:
-    st.session_state.generated_text = ""
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())[:8]
 
@@ -61,9 +59,9 @@ ui.display_sidebar()
 
 user_prompt, manipulated_prompt = ui.display_user_input(suggested_prompts, prompt_template)
 
-selected_model = ui.display_model_selection(available_models, update_models)
+selected_models = ui.display_model_selection(available_models, update_models)
 
-ui.handle_generation(user_prompt, manipulated_prompt, selected_model, available_models, generated_code_path)
+ui.handle_generation(user_prompt, manipulated_prompt, selected_models, available_models, generated_code_path)
 
 ui.display_metrics_and_output()
 
