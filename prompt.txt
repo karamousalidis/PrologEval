@@ -1,0 +1,6 @@
+Write a Prolog predicate for the Fibonacci sequence.
+Write a Prolog predicate to calculate the factorial of a number.
+Define a Prolog predicate fibonacci/2 that calculates the Nth Fibonacci number.
+Implement a Prolog predicate reverse_list/2 to reverse a list.
+Define a Prolog predicate sum_list/2 that calculates the sum of a list of numbers.
+Write a Prolog predicate to find the maximum element in a list.

@@ -1,0 +1,11 @@
+Write a Prolog program that solves the following problem: {{user_prompt}}"
+Requirements:
+    – Provide a fully functional Prolog implementation.
+    – Include detailed comments for every rule, fact, and predicate.
+    – Ensure that all Prolog clauses end with a period and the code is executable.
+    – Make sure not to cause any infinite recursion - use too much memory.
+    – Use proper Prolog syntax and indentation.
+    – Clearly separate different sections with in-line comments.
+    – Use meaningful predicate and variable names.
+    – Do not say anything other than the code without starting the line with %.
+    – Do not mark it as a code block, and do not use any Markdown formatting.
