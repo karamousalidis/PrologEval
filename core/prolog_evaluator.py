@@ -10,6 +10,11 @@ _prolog_instance = Prolog()
 # Initialize sandbox once
 try:
     list(_prolog_instance.query("use_module(library(sandbox))"))
+    # Authorize basic harmless I/O predicates for generated code that prints results
+    list(_prolog_instance.query("assertz(sandbox:safe_primitive(system:write(_)))"))
+    list(_prolog_instance.query("assertz(sandbox:safe_primitive(system:writeln(_)))"))
+    list(_prolog_instance.query("assertz(sandbox:safe_primitive(system:nl))"))
+    list(_prolog_instance.query("assertz(sandbox:safe_primitive(system:format(_,_)))"))
 except Exception as e:
     logging.warning(f"Failed to load Prolog sandbox: {e}")
 
