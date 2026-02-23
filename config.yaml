@@ -1,6 +1,0 @@
-paths:
-  prompt: "prompt.txt"
-  modified_prompt: "modified_prompt.txt"
-  evaluation_prompt: "evaluation_prompt.txt"
-  generated_code: "generated_code.pl"
-  models_xml: "models.xml"

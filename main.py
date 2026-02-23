@@ -3,8 +3,8 @@ from dotenv import load_dotenv
 import sys
 import os
 import uuid
-import utils
-import ui
+from core import utils
+from frontend import ui
 
 # Load environmental variables
 load_dotenv()
@@ -22,7 +22,7 @@ if "session_id" not in st.session_state:
 
 try:
     # Load configurations
-    config = utils.load_config()
+    config = utils.load_config(file_path="config/config.yaml")
     paths = config.get("paths", {})
     
     # Load dynamic models from XML

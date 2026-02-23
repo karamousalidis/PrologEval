@@ -12,3 +12,5 @@ env.bak/
 venv.bak/
 .DS_Store
 *.pl
+temp/*
+!temp/.gitkeep

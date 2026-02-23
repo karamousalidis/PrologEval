@@ -1,8 +1,8 @@
 import streamlit as st
-import utils
+from core import utils
 from typing import Dict, Any, List, Tuple, Callable
-from llm_service import generate_openrouter_response
-from prolog_evaluator import extract_prolog_code, save_generated_code, run_prolog_query
+from core.llm_service import generate_openrouter_response
+from core.prolog_evaluator import extract_prolog_code, save_generated_code, run_prolog_query
 
 def display_sidebar() -> None:
     """Renders the session history in the sidebar."""
@@ -20,7 +20,11 @@ def display_sidebar() -> None:
                 st.write(f"**Prompt:** {record['user_prompt'][:50]}...")
                 st.write(f"**Time Taken:** {record['time_taken']:.2f}s")
                 st.write(f"**Tokens (Prompt/Completion):** {record['tokens_prompt']} / {record['tokens_completion']}")
-                st.write(f"**Readability Score:** {record['readability_score']}")
+                
+                r_score = record.get('readability_score', 'N/A')
+                if isinstance(r_score, (float, int)):
+                    r_score = f"{r_score:.2f}"
+                st.write(f"**Readability Score:** {r_score}")
                 
                 st.download_button(
                     label="Download this output",
@@ -84,7 +88,7 @@ def display_model_selection(available_models: Dict[str, str], on_change_callback
     
     selected = st.radio("Choose a model:", list(available_models.keys())) # type: ignore
 
-    if st.button("Manage Models", icon="⚙️", help="Add or remove models from your configuration"):
+    if st.button("Manage Models", help="Add or remove models from your configuration"):
         manage_models_dialog(available_models, on_change_callback)
             
     return str(selected)
@@ -127,7 +131,11 @@ def display_metrics_and_output() -> None:
         cols[0].metric("Time Taken", f"{st.session_state.metrics['time_taken']:.2f}s")
         cols[1].metric("Prompt Tokens", st.session_state.metrics['tokens_prompt'])
         cols[2].metric("Completion Tokens", st.session_state.metrics['tokens_completion'])
-        cols[3].metric("Comment Readability", st.session_state.metrics['readability_score'])
+        
+        r_score = st.session_state.metrics.get('readability_score', 'N/A')
+        if isinstance(r_score, (float, int)):
+            r_score = f"{r_score:.2f}"
+        cols[3].metric("Comment Readability", r_score)
 
     st.text_area("Generated Output:", st.session_state.generated_text, height=400, disabled=True)
 
@@ -170,7 +178,7 @@ def handle_evaluation(evaluation_template: str, available_models: Dict[str, str]
     
     selected_evaluator = st.radio("Choose an evaluator model:", list(available_models.keys())) # type: ignore
     
-    if st.button("Manage Models", icon="⚙️", help="Add or remove models from your configuration", key="eval_manage_btn"):
+    if st.button("Manage Models", help="Add or remove models from your configuration", key="eval_manage_btn"):
         manage_models_dialog(available_models, on_change_callback)
 
     if st.button("Evaluate Output"):

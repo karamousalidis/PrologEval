@@ -58,14 +58,19 @@ This project is a Streamlit-based dashboard designed to evaluate the performance
 
 ## Project Structure
 
+- `core/`: Python backend and utility scripts.
+  - `llm_service.py`: API communication with OpenRouter and text analytics.
+  - `prolog_evaluator.py`: PySwip Prolog engine instance and query execution.
+  - `utils.py`: General utility functions.
+- `frontend/`: UI logic.
+  - `ui.py`: Streamlit rendering components.
+- `config/`: Configuration files.
+  - `config.yaml`: Centralized configuration for file paths.
+  - `models.xml`: Dynamic OpenRouter model mappings.
+- `prompts/`: Text file templates for LLMs.
+  - `prompt.txt`: Suggested prompts for the UI.
+  - `modified_prompt.txt`: Template to wrap user input before querying.
+  - `evaluation_prompt.txt`: Template for evaluating the generated output.
+- `temp/`: Temporary session-specific generated Prolog files (`*.pl`).
 - `main.py`: The entry point for the Streamlit application.
-- `ui.py`: Contains the UI rendering logic and Streamlit components.
-- `llm_service.py`: Handles API communication with OpenRouter and text analytics.
-- `prolog_evaluator.py`: Manages the single PySwip Prolog engine instance and query execution.
-- `utils.py`: General utility functions for file loading and configuration.
-- `config.yaml`: Centralized configuration file for model IDs and file paths.
 - `requirements.txt`: Python package dependencies.
-- `prompt.txt`: A list of suggested prompts for the UI.
-- `modified_prompt.txt`: The template used to wrap user input before sending it to the model.
-- `evaluation_prompt.txt`: The template used when requesting a second model to evaluate the generated output.
-- `generated_code.pl`: The auto-saved output from the latest generation.
