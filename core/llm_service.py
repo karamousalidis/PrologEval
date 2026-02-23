@@ -11,7 +11,9 @@ def get_async_client() -> openai.AsyncOpenAI:
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
     return openai.AsyncOpenAI(
         base_url="https://openrouter.ai/api/v1",
-        api_key=OPENROUTER_API_KEY
+        api_key=OPENROUTER_API_KEY,
+        max_retries=3,
+        timeout=60.0 
     )
 
 def extract_prolog_comments(text: str) -> str:
