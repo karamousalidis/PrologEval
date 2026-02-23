@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <models>
-    <model name="Claude 3.5 Sonnet" id="anthropic/claude-3.5-sonnet" />
-    <model name="Gemini 2.0 Flash" id="google/gemini-2.0-flash-001" />
-    <model name="DeepSeek R1" id="deepseek/deepseek-r1" />
-    <model name="Qwen3.5" id="qwen/qwen3.5-plus-02-15" />
+    <model name="Claude 3.5 Sonnet" id="anthropic/claude-3.5-sonnet" temperature="0.2" top_p="1.0" max_tokens="4096" />
+    <model name="Gemini 2.0 Flash" id="google/gemini-2.0-flash-001" temperature="1.0" top_p="1.0" max_tokens="4096" />
+    <model name="DeepSeek R1" id="deepseek/deepseek-r1" temperature="1.0" top_p="1.0" max_tokens="4096" />
+    <model name="Qwen3.5" id="qwen/qwen3.5-plus-02-15" temperature="1.6" top_p="0.15" max_tokens="4096" />
 </models>

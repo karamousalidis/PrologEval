@@ -111,15 +111,26 @@ def analyze_prolog_code(code: str) -> Dict[str, Any]:
         "builtin_predicates": found_builtins
     }
 
-async def generate_openrouter_response_async(model_id: str, prompt: str) -> Dict[str, Any]:
+async def generate_openrouter_response_async(model_id: str, prompt: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
     """Generates an asynchronous response from OpenRouter."""
     client = get_async_client()
     try:
         start_time = time.time()
-        completion = await client.chat.completions.create(
-            model=model_id,
-            messages=[{"role": "user", "content": prompt}]
-        )
+        
+        api_kwargs: Dict[str, Any] = {
+            "model": model_id,
+            "messages": [{"role": "user", "content": prompt}]
+        }
+        
+        # Only send params that differ from defaults (avoids type issues with strict providers)
+        _defaults = {"temperature": 1.0, "top_p": 1.0, "max_tokens": 4096, "frequency_penalty": 0.0, "presence_penalty": 0.0}
+        if params:
+            for key, default_val in _defaults.items():
+                val = params.get(key)
+                if val is not None and val != default_val:
+                    api_kwargs[key] = int(val) if key == "max_tokens" else float(val)
+        
+        completion = await client.chat.completions.create(**api_kwargs)
         end_time = time.time()
         
         response_message = completion.choices[0].message

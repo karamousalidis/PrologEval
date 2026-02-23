@@ -25,6 +25,11 @@ try:
     
     # Load dynamic models from XML
     models_xml_path = paths.get("models_xml", "models.xml")
+    # Migrate: if old flat format (str values) is cached, force reload
+    if "available_models" in st.session_state:
+        first_val = next(iter(st.session_state.available_models.values()), None)
+        if isinstance(first_val, str):
+            del st.session_state["available_models"]
     if "available_models" not in st.session_state:
         st.session_state.available_models = utils.load_models_xml(models_xml_path)
     available_models = st.session_state.available_models
