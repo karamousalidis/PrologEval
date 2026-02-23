@@ -146,7 +146,7 @@ def display_test_generated_code(generated_code_path: str) -> None:
     
     if st.button("Run Query"):
         if user_query:
-            success, results, error_msg = run_prolog_query(user_query, file_path=generated_code_path)
+            success, results, error_msg = run_prolog_query(user_query, file_path=generated_code_path, session_id=st.session_state.session_id)
             
             if not success:
                st.error(f"Error executing query: {error_msg}")

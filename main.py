@@ -1,6 +1,8 @@
 import streamlit as st
 from dotenv import load_dotenv
 import sys
+import os
+import uuid
 import utils
 import ui
 
@@ -15,6 +17,8 @@ if "history" not in st.session_state:
     st.session_state.history = []
 if "generated_text" not in st.session_state:
     st.session_state.generated_text = ""
+if "session_id" not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())[:8]
 
 try:
     # Load configurations
@@ -42,7 +46,10 @@ try:
     evaluation_file_path = paths.get("evaluation_prompt", "evaluation_prompt.txt")
     evaluation_template = utils.load_text_from_file(evaluation_file_path)
     
-    generated_code_path = paths.get("generated_code", "generated_code.pl")
+    base_generated_code_path = paths.get("generated_code", "generated_code.pl")
+    # Create session-specific filename
+    filename, ext = os.path.splitext(base_generated_code_path)
+    generated_code_path = f"{filename}_{st.session_state.session_id}{ext}"
 except Exception as e:
     st.error(f"Initialization Error: {e}")
     st.stop()
