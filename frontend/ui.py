@@ -72,8 +72,8 @@ def display_user_input(suggested_prompts: List[str], prompt_template: str) -> Tu
     return user_prompt, manipulated_prompt
 
 @st.dialog("Manage Models")
-def manage_models_dialog(available_models: Dict[str, str], on_change_callback: Callable) -> None:
-    tab1, tab2 = st.tabs(["Add New", "Remove"])
+def manage_models_dialog(available_models: Dict[str, Dict[str, Any]], on_change_callback: Callable) -> None:
+    tab1, tab2, tab3 = st.tabs(["Add New", "Remove", "Configure Parameters"])
     
     with tab1:
         st.write("Add a custom model from OpenRouter.")
@@ -81,7 +81,7 @@ def manage_models_dialog(available_models: Dict[str, str], on_change_callback: C
         model_id = st.text_input("OpenRouter ID:", placeholder="meta-llama/llama-3-8b")
         if st.button("Save New Model"):
             if name and model_id:
-                available_models[name] = model_id
+                available_models[name] = {"id": model_id, "params": {"temperature": 1.0, "top_p": 1.0, "max_tokens": 4096}}
                 on_change_callback(available_models)
                 st.success(f"Added {name}!")
                 st.rerun()
@@ -99,8 +99,28 @@ def manage_models_dialog(available_models: Dict[str, str], on_change_callback: C
                 st.rerun()
             else:
                 st.warning("Please select a valid model to remove.")
+    
+    with tab3:
+        model_to_configure = st.selectbox("Select model to configure:", list(available_models.keys()), key="cfg_select")
+        if model_to_configure:
+            data = available_models[model_to_configure]
+            params = data.get("params", {"temperature": 1.0, "top_p": 1.0, "max_tokens": 4096})
+            
+            temperature = st.slider("Temperature", 0.0, 2.0, float(params.get("temperature", 1.0)), 0.1,
+                                    help="Higher = more creative, lower = more deterministic", key="cfg_temp")
+            top_p = st.slider("Top P", 0.0, 1.0, float(params.get("top_p", 1.0)), 0.05,
+                              help="Nucleus sampling threshold", key="cfg_top_p")
+            max_tokens = st.number_input("Max Tokens", min_value=1, max_value=16384,
+                                         value=int(params.get("max_tokens", 4096)), step=256,
+                                         help="Maximum response length", key="cfg_max_tok")
+            
+            if st.button("Save Configuration"):
+                data["params"] = {"temperature": temperature, "top_p": top_p, "max_tokens": max_tokens}
+                on_change_callback(available_models)
+                st.success(f"Saved parameters for {model_to_configure}!")
+                st.rerun()
 
-def display_model_selection(available_models: Dict[str, str], on_change_callback: Callable) -> List[str]:
+def display_model_selection(available_models: Dict[str, Dict[str, Any]], on_change_callback: Callable) -> List[str]:
     """Renders the AI model multi-selection."""
     st.subheader("Select up to two Generative AI Models")
     
@@ -112,7 +132,7 @@ def display_model_selection(available_models: Dict[str, str], on_change_callback
             
     return selected
 
-def handle_generation(user_prompt: str, manipulated_prompt: str, selected_models: List[str], available_models: Dict[str, str], base_generated_code_path: str) -> None:
+def handle_generation(user_prompt: str, manipulated_prompt: str, selected_models: List[str], available_models: Dict[str, Dict[str, Any]], base_generated_code_path: str) -> None:
     """Handles the Generation button click and updates session state."""
     if st.button("Generate Output"):
         if not user_prompt:
@@ -124,7 +144,7 @@ def handle_generation(user_prompt: str, manipulated_prompt: str, selected_models
             
             with st.spinner(f"Generating output using {', '.join(selected_models)}..."):
                 async def fetch_all():
-                    tasks = [generate_openrouter_response_async(available_models[m], manipulated_prompt) for m in selected_models]
+                    tasks = [generate_openrouter_response_async(available_models[m]["id"], manipulated_prompt, params=available_models[m].get("params")) for m in selected_models]
                     return await asyncio.gather(*tasks)
                 
                 results = asyncio.run(fetch_all())
@@ -134,6 +154,9 @@ def handle_generation(user_prompt: str, manipulated_prompt: str, selected_models
                 history_results = {}
                 
                 for idx, (model_name, result) in enumerate(zip(selected_models, results)):
+                    # Attach the params used for display later
+                    if "error" not in result:
+                        result["model_params"] = available_models[model_name].get("params", {})
                     history_results[model_name] = result
                     if "error" in result:
                         st.error(f"{model_name}: {result['error']}")
@@ -186,6 +209,14 @@ def _render_metrics_and_output_for_model(model_name: str, result: Dict[str, Any]
             st.markdown(f"**Built-in Predicates Used:** `{'`, `'.join(builtins)}`")
         else:
             st.markdown("**Built-in Predicates Used:** None detected")
+        
+        # Display model parameters used
+        params = result.get("model_params", {})
+        if params:
+            p_cols = st.columns(3)
+            p_cols[0].metric("Temperature", params.get("temperature", "N/A"))
+            p_cols[1].metric("Top P", params.get("top_p", "N/A"))
+            p_cols[2].metric("Max Tokens", params.get("max_tokens", "N/A"))
 
     st.download_button(
         label=f"Download Prolog Code",
@@ -230,6 +261,16 @@ def _generate_comparison_report() -> str:
         if isinstance(r_score, (float, int)):
             r_score = f"{r_score:.2f}"
         report.append(f"| Readability (Flesch) | {r_score} |")
+        
+        # Model Parameters
+        params = result.get('model_params', {})
+        if params:
+            report.append(f"\n### Model Parameters")
+            report.append(f"| Parameter | Value |")
+            report.append(f"|-----------|-------|")
+            report.append(f"| Temperature | {params.get('temperature', 'N/A')} |")
+            report.append(f"| Top P | {params.get('top_p', 'N/A')} |")
+            report.append(f"| Max Tokens | {params.get('max_tokens', 'N/A')} |")
         
         # Code Quality Metrics
         clean_code = extract_prolog_code(result["text"])
@@ -336,12 +377,10 @@ def display_test_generated_code(base_generated_code_path: str) -> None:
             with cols[idx]:
                 _render_test_section_for_model(model_name)
 
-def handle_evaluation(evaluation_template: str, available_models: Dict[str, str], on_change_callback: Callable) -> None:
+def handle_evaluation(evaluation_template: str, available_models: Dict[str, Dict[str, Any]], on_change_callback: Callable) -> None:
     """Handles the evaluation prompt logic with up to 2 evaluator models."""
     st.divider()
     st.subheader("Evaluate the AI Output")
-    
-    default_eval = [list(available_models.keys())[0]] if available_models else []
     
     default_eval = [list(available_models.keys())[0]] if available_models else []
     selected_evaluators = st.multiselect("Choose up to 2 evaluator models:", list(available_models.keys()), default=default_eval, max_selections=2, key="eval_multiselect")
@@ -363,11 +402,12 @@ def handle_evaluation(evaluation_template: str, available_models: Dict[str, str]
             async def evaluate_all():
                 tasks = []
                 for evaluator_name in selected_evaluators:
-                    evaluator_id = available_models[evaluator_name]
+                    evaluator_id = available_models[evaluator_name]["id"]
+                    evaluator_params = available_models[evaluator_name].get("params")
                     for gen_model in gen_model_names:
                         generated_text = st.session_state.model_results[gen_model]["text"]
                         final_eval_prompt = evaluation_template.replace("{{generated_code}}", generated_text)
-                        tasks.append(generate_openrouter_response_async(evaluator_id, final_eval_prompt))
+                        tasks.append(generate_openrouter_response_async(evaluator_id, final_eval_prompt, params=evaluator_params))
                 return await asyncio.gather(*tasks)
                 
             with st.spinner(f"Evaluating with {', '.join(selected_evaluators)}..."):
