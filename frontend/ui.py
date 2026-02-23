@@ -1,8 +1,9 @@
 import streamlit as st
 import asyncio
+from datetime import datetime
 from core import utils
 from typing import Dict, Any, List, Tuple, Callable
-from core.llm_service import generate_openrouter_response_async
+from core.llm_service import generate_openrouter_response_async, analyze_prolog_code
 from core.prolog_evaluator import extract_prolog_code, save_generated_code, run_prolog_query
 
 def display_sidebar() -> None:
@@ -164,7 +165,27 @@ def _render_metrics_and_output_for_model(model_name: str, result: Dict[str, Any]
     cols[2].metric("Readability", r_score)
 
     st.write("**Generated Output:**")
-    st.code(result["text"], language="prolog")
+    with st.container(height=400):
+        st.code(result["text"], language="prolog")
+
+    # Code Quality Metrics
+    clean_code = extract_prolog_code(result["text"])
+    quality = analyze_prolog_code(clean_code)
+    
+    safe_key = model_name.replace(" ", "_")
+    with st.expander("Code Quality Metrics", expanded=False):
+        q_cols = st.columns(5)
+        q_cols[0].metric("Lines of Code", quality["lines_of_code"])
+        q_cols[1].metric("Predicates", quality["predicate_count"])
+        q_cols[2].metric("Clauses", quality["clause_count"])
+        q_cols[3].metric("Comment Ratio", f"{quality['comment_ratio']}%")
+        q_cols[4].metric("Recursion", "Yes" if quality["uses_recursion"] else "No")
+        
+        builtins = quality.get("builtin_predicates", [])
+        if builtins:
+            st.markdown(f"**Built-in Predicates Used:** `{'`, `'.join(builtins)}`")
+        else:
+            st.markdown("**Built-in Predicates Used:** None detected")
 
     st.download_button(
         label=f"Download Prolog Code",
@@ -174,6 +195,73 @@ def _render_metrics_and_output_for_model(model_name: str, result: Dict[str, Any]
         key=f"dl_main_{model_name}",
         use_container_width=True
     )
+
+def _generate_comparison_report() -> str:
+    """Generates a markdown comparison report from the current session state."""
+    model_results = st.session_state.get("model_results", {})
+    if not model_results:
+        return ""
+    
+    report = []
+    report.append(f"# PrologEval Comparison Report")
+    report.append(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    report.append(f"**Models Compared:** {', '.join(model_results.keys())}")
+    
+    # Prompt used
+    if st.session_state.history:
+        last_run = st.session_state.history[-1]
+        report.append(f"\n## Prompt")
+        report.append(f"```\n{last_run.get('user_prompt', 'N/A')}\n```")
+    
+    report.append("\n---")
+    
+    # Per-model sections
+    for model_name, result in model_results.items():
+        report.append(f"\n## {model_name}")
+        
+        # Generation Metrics
+        report.append(f"\n### Generation Metrics")
+        report.append(f"| Metric | Value |")
+        report.append(f"|--------|-------|")
+        report.append(f"| Time Taken | {result['time_taken']:.2f}s |")
+        report.append(f"| Input Tokens | {result['tokens_prompt']} |")
+        report.append(f"| Output Tokens | {result['tokens_completion']} |")
+        r_score = result.get('readability_score', 'N/A')
+        if isinstance(r_score, (float, int)):
+            r_score = f"{r_score:.2f}"
+        report.append(f"| Readability (Flesch) | {r_score} |")
+        
+        # Code Quality Metrics
+        clean_code = extract_prolog_code(result["text"])
+        quality = analyze_prolog_code(clean_code)
+        
+        report.append(f"\n### Code Quality")
+        report.append(f"| Metric | Value |")
+        report.append(f"|--------|-------|")
+        report.append(f"| Lines of Code | {quality['lines_of_code']} |")
+        report.append(f"| Predicates | {quality['predicate_count']} |")
+        report.append(f"| Clauses | {quality['clause_count']} |")
+        report.append(f"| Comment Ratio | {quality['comment_ratio']}% |")
+        report.append(f"| Uses Recursion | {'Yes' if quality['uses_recursion'] else 'No'} |")
+        
+        builtins = quality.get('builtin_predicates', [])
+        if builtins:
+            report.append(f"| Built-in Predicates | {', '.join(builtins)} |")
+        
+        # Generated Code
+        report.append(f"\n### Generated Code")
+        report.append(f"```prolog\n{clean_code}\n```")
+        
+        report.append("\n---")
+    
+    # Evaluation results if available
+    if st.session_state.get("eval_results"):
+        report.append(f"\n## Evaluation Results")
+        for label, eval_text in st.session_state.eval_results.items():
+            report.append(f"\n### {label}")
+            report.append(eval_text)
+    
+    return "\n".join(report)
 
 def display_metrics_and_output() -> None:
     """Renders the generation metrics and generated output text area."""
@@ -189,6 +277,17 @@ def display_metrics_and_output() -> None:
         for idx, model_name in enumerate(model_names):
             with cols[idx]:
                 _render_metrics_and_output_for_model(model_name, st.session_state.model_results[model_name])
+    
+    # Download Report button
+    report_md = _generate_comparison_report()
+    if report_md:
+        st.download_button(
+            label="Download Comparison Report",
+            data=report_md,
+            file_name=f"prologeval_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+            mime="text/markdown",
+            key="dl_report"
+        )
 
 def _render_test_section_for_model(model_name: str):
     """Renders a self-contained query input + button + results for a single model."""
