@@ -14,3 +14,6 @@ venv.bak/
 *.pl
 temp/*
 !temp/.gitkeep
+
+# Testing
+.pytest_cache/

@@ -6,3 +6,5 @@ __pycache__
 .env
 .DS_Store
 temp/
+.pytest_cache/
+tests/
