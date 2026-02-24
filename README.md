@@ -101,6 +101,18 @@ The `core/` backend logic translates into a fully mocked `pytest` suite (no SWI-
    ruff check . --fix
    ```
 
+## CI/CD
+
+The project uses **GitHub Actions** (`.github/workflows/ci.yml`) which runs automatically on every push or pull request to `main` and `develop`:
+
+| Job | What it does |
+|-----|--------------|
+| **Lint & Format** | Runs `ruff check` and `ruff format --check` |
+| **Tests** | Installs SWI-Prolog, runs `pytest tests/ -v` |
+| **Docker Build** | Verifies the Docker image builds successfully |
+
+Jobs run sequentially (Lint → Tests → Docker). If linting fails, tests and Docker are skipped entirely.
+
 ## Usage
 
 1. Activate your virtual environment:
