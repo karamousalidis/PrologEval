@@ -83,6 +83,19 @@ To rebuild after changes:
 docker compose up --build
 ```
 
+## Testing
+
+The `core/` backend logic translates into a fully mocked `pytest` suite (no SWI-Prolog or network required).
+
+1. Install the development dependencies:
+   ```bash
+   pip install -e ".[dev]"
+   ```
+2. Run the test suite:
+   ```bash
+   pytest tests/ -v
+   ```
+
 ## Usage
 
 1. Activate your virtual environment:
