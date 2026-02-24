@@ -15,5 +15,6 @@ venv.bak/
 temp/*
 !temp/.gitkeep
 
-# Testing
+# Testing & Linting
 .pytest_cache/
+.ruff_cache/

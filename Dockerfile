@@ -1,9 +1,8 @@
 FROM python:3.13-slim
 
 # Install SWI-Prolog (provides libswipl for PySwip)
-ARG SWI_PROLOG_VERSION=9.2.9+dfsg-1
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends swi-prolog=${SWI_PROLOG_VERSION} && \
+    apt-get install -y --no-install-recommends swi-prolog && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
