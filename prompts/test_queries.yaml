@@ -1,0 +1,39 @@
+# Predefined test queries for batch benchmark auto-testing.
+# Each entry maps a prompt (must match a line in prompt.txt exactly) to a list of test queries.
+# Queries should NOT end with a period — the evaluator adds it automatically.
+
+- prompt: "Write a Prolog predicate for the Fibonacci sequence."
+  queries:
+    - "fibonacci(0, X)"
+    - "fibonacci(1, X)"
+    - "fibonacci(10, X)"
+
+- prompt: "Write a Prolog predicate to calculate the factorial of a number."
+  queries:
+    - "factorial(0, X)"
+    - "factorial(5, X)"
+    - "factorial(10, X)"
+
+- prompt: "Define a Prolog predicate fibonacci/2 that calculates the Nth Fibonacci number."
+  queries:
+    - "fibonacci(0, X)"
+    - "fibonacci(1, X)"
+    - "fibonacci(10, X)"
+
+- prompt: "Implement a Prolog predicate reverse_list/2 to reverse a list."
+  queries:
+    - "reverse_list([], X)"
+    - "reverse_list([1,2,3], X)"
+    - "reverse_list([a,b,c,d], X)"
+
+- prompt: "Define a Prolog predicate sum_list/2 that calculates the sum of a list of numbers."
+  queries:
+    - "sum_list([], X)"
+    - "sum_list([1,2,3], X)"
+    - "sum_list([10,20,30], X)"
+
+- prompt: "Write a Prolog predicate to find the maximum element in a list."
+  queries:
+    - "max_list([1], X)"
+    - "max_list([3,1,4,1,5,9], X)"
+    - "max_list([10,20,5], X)"

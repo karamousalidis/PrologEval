@@ -181,7 +181,7 @@ def _render_metrics_and_output_for_model(model_name: str, result: Dict[str, Any]
         file_name=f"generated_code_{model_name.replace(' ', '_')}.pl",
         mime="text/plain",
         key=f"dl_main_{model_name}",
-        use_container_width=True
+        width="stretch"
     )
 
 

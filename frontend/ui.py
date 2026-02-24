@@ -10,6 +10,7 @@ from frontend.code_generation import (
 )
 from frontend.evaluation import handle_evaluation
 from frontend.testing import display_test_generated_code
+from frontend.batch import display_batch_benchmark
 
 __all__ = [
     "display_sidebar",
@@ -20,4 +21,6 @@ __all__ = [
     "display_metrics_and_output",
     "handle_evaluation",
     "display_test_generated_code",
+    "display_batch_benchmark",
 ]
+
