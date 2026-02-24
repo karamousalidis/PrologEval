@@ -83,9 +83,9 @@ To rebuild after changes:
 docker compose up --build
 ```
 
-## Testing
+## Testing & Linting
 
-The `core/` backend logic translates into a fully mocked `pytest` suite (no SWI-Prolog or network required).
+The `core/` backend logic translates into a fully mocked `pytest` suite (no SWI-Prolog or network required). The project uses `ruff` for code formatting and linting.
 
 1. Install the development dependencies:
    ```bash
@@ -94,6 +94,11 @@ The `core/` backend logic translates into a fully mocked `pytest` suite (no SWI-
 2. Run the test suite:
    ```bash
    pytest tests/ -v
+   ```
+3. Format and lint the code:
+   ```bash
+   ruff format .
+   ruff check . --fix
    ```
 
 ## Usage

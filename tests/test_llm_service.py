@@ -1,9 +1,11 @@
 """Tests for core/llm_service.py — comment extraction, code analysis, async generation."""
+
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
 
 
 # ── extract_prolog_comments ──────────────────────────────────────────────────
+
 
 class TestExtractPrologComments:
     """Pure string function — no mocking needed."""
@@ -41,6 +43,7 @@ class TestExtractPrologComments:
 
 # ── analyze_prolog_code ──────────────────────────────────────────────────────
 
+
 class TestAnalyzePrologCode:
     """Patches _SWIPL_BUILTINS so tests don't need SWI-Prolog installed."""
 
@@ -53,6 +56,7 @@ class TestAnalyzePrologCode:
 
     def _analyze(self, code):
         from core.llm_service import analyze_prolog_code
+
         return analyze_prolog_code(code)
 
     def test_lines_of_code(self):
@@ -64,7 +68,7 @@ class TestAnalyzePrologCode:
         code = "foo(1).\nfoo(2).\nbar(X) :- foo(X)."
         result = self._analyze(code)
         assert result["predicate_count"] == 2  # foo, bar
-        assert result["clause_count"] == 3     # foo/1 x2, bar/1 x1
+        assert result["clause_count"] == 3  # foo/1 x2, bar/1 x1
 
     def test_comment_ratio(self):
         code = "% comment\nfoo(1)."
@@ -104,8 +108,8 @@ class TestAnalyzePrologCode:
 
 # ── generate_openrouter_response_async ───────────────────────────────────────
 
-class TestGenerateOpenrouterResponseAsync:
 
+class TestGenerateOpenrouterResponseAsync:
     @pytest.fixture(autouse=True)
     def _patch_builtins(self):
         """Patch builtins to avoid SWI-Prolog dependency at import time."""
@@ -133,6 +137,7 @@ class TestGenerateOpenrouterResponseAsync:
 
         with patch("core.llm_service.get_async_client", return_value=mock_client):
             from core.llm_service import generate_openrouter_response_async
+
             result = await generate_openrouter_response_async("test/model", "Write hello world in Prolog")
 
         assert "text" in result
@@ -148,6 +153,7 @@ class TestGenerateOpenrouterResponseAsync:
 
         with patch("core.llm_service.get_async_client", return_value=mock_client):
             from core.llm_service import generate_openrouter_response_async
+
             result = await generate_openrouter_response_async("test/model", "prompt")
 
         assert "error" in result

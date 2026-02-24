@@ -16,4 +16,25 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.25",
+    "ruff>=0.3.0",
 ]
+
+[tool.ruff]
+# Set the maximum line length to 120 (Streamlit wide layout + LLM prompts usually means longer lines are fine)
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+# E = pycodestyle errors, F = pyflakes, W = pycodestyle warnings, B = flake8-bugbear
+select = ["E", "F", "W", "B"]
+ignore = ["E501"] # Ignore line length violations (let the formatter handle what it can)
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
