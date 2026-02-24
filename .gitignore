@@ -18,3 +18,8 @@ temp/*
 # Testing & Linting
 .pytest_cache/
 .ruff_cache/
+tests/
+*.egg-info/
+
+# Package Build
+*.egg-info/

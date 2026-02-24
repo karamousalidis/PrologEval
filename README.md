@@ -89,9 +89,10 @@ docker compose up --build
 
 The `core/` backend logic translates into a fully mocked `pytest` suite (no SWI-Prolog or network required). The project uses `ruff` for code formatting and linting.
 
-1. Install the development dependencies:
+1. Install the development dependencies and setup git hooks:
    ```bash
    pip install -e ".[dev]"
+   pre-commit install
    ```
 2. Run the test suite:
    ```bash
