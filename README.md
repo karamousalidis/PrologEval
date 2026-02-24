@@ -83,7 +83,11 @@ PrologEval/
 │   ├── prolog_evaluator.py   #   PySwip engine, static analysis & query execution
 │   └── utils.py              #   Config loading, XML parsing, file helpers
 ├── frontend/                 # Streamlit UI
-│   └── ui.py                 #   All rendering: sidebar, model selection, outputs, reports
+│   ├── ui.py                 #   Re-export shim (keeps main.py imports unchanged)
+│   ├── sidebar.py            #   Session history sidebar
+│   ├── code_generation.py    #   Prompt input, model management, generation, metrics & reports
+│   ├── evaluation.py         #   AI-based code evaluation with dual evaluator support
+│   └── testing.py            #   Live Prolog query testing via PySwip
 ├── config/                   # Configuration
 │   ├── config.yaml           #   Centralized path settings
 │   └── models.xml            #   Model mappings & per-model parameters
