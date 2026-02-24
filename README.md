@@ -32,6 +32,8 @@ A Streamlit-based dashboard for evaluating how well various Generative AI models
 - An [OpenRouter API Key](https://openrouter.ai/)
 - SWI-Prolog (`swipl`) installed on your system (required for query evaluation via PySwip and built-in predicate detection)
 
+> **Tip:** Don't want to install SWI-Prolog locally? Use the [Docker setup](#docker-quick-start) instead.
+
 ## Setup Instructions
 
 1. **Clone the Repository**
@@ -51,10 +53,35 @@ A Streamlit-based dashboard for evaluating how well various Generative AI models
    ```
 
 4. **Configure Environment Variables**
-   Create a `.env` file in the root directory:
-   ```env
-   OPENROUTER_API_KEY="your_openrouter_api_key_here"
+   ```bash
+   cp .env.example .env
    ```
+   Then edit `.env` and add your OpenRouter API key.
+
+## Docker Quick Start
+
+The quickest way to get running — no need to install Python, SWI-Prolog, or any dependencies locally.
+
+**Prerequisites:** [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
+
+1. **Clone & configure**
+   ```bash
+   git clone <repo-url> && cd PrologEval
+   cp .env.example .env
+   # Edit .env and add your OpenRouter API key
+   ```
+
+2. **Build & run**
+   ```bash
+   docker compose up
+   ```
+
+3. **Open** [http://localhost:8501](http://localhost:8501)
+
+To rebuild after changes:
+```bash
+docker compose up --build
+```
 
 ## Usage
 
@@ -137,5 +164,9 @@ PrologEval/
 ├── temp/                     # Session-specific generated .pl files
 ├── main.py                   # Entry point
 ├── pyproject.toml            # Project metadata & dependencies
+├── Dockerfile                # Container image (Python 3.13 + SWI-Prolog)
+├── docker-compose.yml        # One-command startup
+├── .dockerignore             # Build context exclusions
+├── .env.example              # Environment variable template
 └── .gitignore
 ```
