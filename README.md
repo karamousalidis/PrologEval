@@ -1,5 +1,7 @@
 # AI Logic Programming Evaluator
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A Streamlit-based dashboard for evaluating how well various Generative AI models write logic programming code (Prolog). Compare outputs side-by-side, run Prolog queries live, and evaluate the generated code with a second AI model — all from one interface.
 
 ## Features
