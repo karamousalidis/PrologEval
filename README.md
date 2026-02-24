@@ -46,7 +46,11 @@ A Streamlit-based dashboard for evaluating how well various Generative AI models
 
 3. **Install Dependencies**
    ```bash
-   pip install -r requirements.txt
+   pip install .
+   ```
+   For development tools (pytest, ruff):
+   ```bash
+   pip install -e ".[dev]"
    ```
 
 4. **Configure Environment Variables**
@@ -99,6 +103,6 @@ PrologEval/
 │   └── evaluation_prompt.txt #   Template for AI-based code evaluation
 ├── temp/                     # Session-specific generated .pl files
 ├── main.py                   # Entry point
-├── requirements.txt          # Dependencies
+├── pyproject.toml            # Project metadata & dependencies
 └── .gitignore
 ```

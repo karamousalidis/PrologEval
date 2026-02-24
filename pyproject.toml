@@ -1,0 +1,13 @@
+[project]
+name = "prologeval"
+version = "0.1.0"
+description = "Logic Programming Evaluator — Compare Gen AI models on Prolog code generation and evaluation."
+requires-python = ">=3.13"
+dependencies = [
+    "streamlit>=1.42.0",
+    "openai>=1.61.0",
+    "python-dotenv>=1.0.1",
+    "textstat==0.7.13",
+    "pyswip>=0.3.3",
+    "PyYAML>=6.0.1",
+]
