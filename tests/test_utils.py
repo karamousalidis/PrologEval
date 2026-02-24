@@ -1,4 +1,5 @@
 """Tests for core/utils.py — config loading, model XML I/O, text helpers."""
+
 import pytest
 import yaml
 from core.utils import (
@@ -13,6 +14,7 @@ from core.utils import (
 
 
 # ── load_config ──────────────────────────────────────────────────────────────
+
 
 class TestLoadConfig:
     def test_load_valid_yaml(self, tmp_path):
@@ -42,6 +44,7 @@ class TestLoadConfig:
 
 
 # ── load_models_xml / save_models_xml ────────────────────────────────────────
+
 
 class TestModelsXml:
     SAMPLE_MODELS = {
@@ -90,6 +93,7 @@ class TestModelsXml:
 
 # ── load_text_from_file ──────────────────────────────────────────────────────
 
+
 class TestLoadTextFromFile:
     def test_reads_content(self, tmp_path):
         f = tmp_path / "hello.txt"
@@ -103,6 +107,7 @@ class TestLoadTextFromFile:
 
 
 # ── load_suggested_prompts ───────────────────────────────────────────────────
+
 
 class TestLoadSuggestedPrompts:
     def test_loads_prompts(self, tmp_path):
@@ -124,6 +129,7 @@ class TestLoadSuggestedPrompts:
 
 
 # ── load_test_queries ────────────────────────────────────────────────────────
+
 
 class TestLoadTestQueries:
     def test_loads_queries(self, tmp_path):

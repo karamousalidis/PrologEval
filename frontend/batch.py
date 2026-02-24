@@ -5,7 +5,6 @@ import io
 import os
 import re
 import subprocess
-import logging
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from core.llm_service import generate_openrouter_response_async, analyze_prolog_code
@@ -22,29 +21,27 @@ def _check_code_safety(code: str) -> Optional[str]:
 
 def _run_single_query_subprocess(code: str, query: str, timeout: int = 15) -> Dict[str, Any]:
     """Runs a single Prolog query in an isolated swipl subprocess."""
-    clean_query = query.strip().rstrip('.')
-    
+    clean_query = query.strip().rstrip(".")
+
     # Write code to a unique temp file
     temp_path = os.path.join("temp", f"subproc_{os.getpid()}_{id(query) % 100000}.pl")
     save_generated_code(code, temp_path)
-    
+
     # Goal: consult file, run query, write result, halt
     goal = (
-        f"consult('{temp_path}'), "
-        f"(catch(({clean_query}), _Err, fail) "
-        f"-> write('__PASS__') "
-        f"; write('__FAIL__')), "
-        f"halt"
+        f"consult('{temp_path}'), (catch(({clean_query}), _Err, fail) -> write('__PASS__') ; write('__FAIL__')), halt"
     )
-    
+
     try:
         result = subprocess.run(
-            ['swipl', '-q', '-g', goal, '-t', 'halt'],
-            capture_output=True, text=True, timeout=timeout,
+            ["swipl", "-q", "-g", goal, "-t", "halt"],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
         )
         out = result.stdout.strip()
-        passed = '__PASS__' in out
-        
+        passed = "__PASS__" in out
+
         return {
             "query": query,
             "success": passed,
@@ -68,13 +65,16 @@ def _run_test_queries(code: str, queries: List[str], **_kwargs) -> List[Dict[str
     # Security check first
     safety_error = _check_code_safety(code)
     if safety_error:
-        return [{"query": q, "success": False, "solutions": [], "error": safety_error, "passed": False} for q in queries]
-    
+        return [
+            {"query": q, "success": False, "solutions": [], "error": safety_error, "passed": False} for q in queries
+        ]
+
     return [_run_single_query_subprocess(code, q) for q in queries]
 
 
-def _build_metrics_row(prompt: str, model_name: str, result: Dict[str, Any],
-                       test_results: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+def _build_metrics_row(
+    prompt: str, model_name: str, result: Dict[str, Any], test_results: Optional[List[Dict[str, Any]]] = None
+) -> Dict[str, Any]:
     """Builds a flat metrics dict from a generation result."""
     if "error" in result:
         return {
@@ -83,11 +83,11 @@ def _build_metrics_row(prompt: str, model_name: str, result: Dict[str, Any],
             "status": "error",
             "error": result["error"],
         }
-    
+
     clean_code = extract_prolog_code(result["text"])
     quality = analyze_prolog_code(clean_code)
     r_score = result.get("readability_score", "N/A")
-    
+
     row = {
         "prompt": prompt,
         "model": model_name,
@@ -104,14 +104,14 @@ def _build_metrics_row(prompt: str, model_name: str, result: Dict[str, Any],
         "builtins": ", ".join(quality.get("builtin_predicates", [])),
         "code": clean_code,
     }
-    
+
     if test_results is not None:
         total = len(test_results)
         passed = sum(1 for t in test_results if t["passed"])
         row["tests_passed"] = passed
         row["tests_total"] = total
         row["test_results"] = test_results
-    
+
     return row
 
 
@@ -139,7 +139,6 @@ def _generate_batch_report(rows: List[Dict[str, Any]], models: List[str]) -> str
     # Summary table
     report.append("## Summary Matrix")
     report.append("")
-    has_tests = any("tests_passed" in r for r in rows)
     header = "| Prompt | " + " | ".join(models) + " |"
     separator = "|--------|" + "|".join(["-----" for _ in models]) + "|"
     report.append(header)
@@ -178,8 +177,8 @@ def _generate_batch_report(rows: List[Dict[str, Any]], models: List[str]) -> str
             if r.get("status") == "error":
                 report.append(f"**Error:** {r.get('error', 'Unknown')}")
                 continue
-            report.append(f"| Metric | Value |")
-            report.append(f"|--------|-------|")
+            report.append("| Metric | Value |")
+            report.append("|--------|-------|")
             report.append(f"| Time | {r['time_s']}s |")
             report.append(f"| Tokens (In/Out) | {r['tokens_in']}/{r['tokens_out']} |")
             report.append(f"| Readability | {r['readability']} |")
@@ -193,20 +192,25 @@ def _generate_batch_report(rows: List[Dict[str, Any]], models: List[str]) -> str
                 report.append(f"| Tests Passed | {r['tests_passed']}/{r['tests_total']} |")
                 for t in r.get("test_results", []):
                     icon = "✅" if t["passed"] else "❌"
-                    report.append(f"  - {icon} `{t['query']}` {'→ ' + str(t['solutions'][:3]) if t['passed'] else '→ ' + str(t.get('error', 'failed'))}")
+                    report.append(
+                        f"  - {icon} `{t['query']}` {'→ ' + str(t['solutions'][:3]) if t['passed'] else '→ ' + str(t.get('error', 'failed'))}"
+                    )
             report.append(f"\n```prolog\n{r['code']}\n```")
         report.append("\n---")
 
     return "\n".join(report)
 
 
-def display_batch_benchmark(suggested_prompts: List[str], prompt_template: str,
-                            available_models: Dict[str, Dict[str, Any]],
-                            test_queries: Optional[Dict[str, List[str]]] = None) -> None:
+def display_batch_benchmark(
+    suggested_prompts: List[str],
+    prompt_template: str,
+    available_models: Dict[str, Dict[str, Any]],
+    test_queries: Optional[Dict[str, List[str]]] = None,
+) -> None:
     """Renders the batch benchmark UI: model/prompt selection, execution, and results."""
     if test_queries is None:
         test_queries = {}
-    
+
     st.subheader("Batch Benchmark Configuration")
 
     # Model selection — no limit
@@ -270,7 +274,7 @@ def display_batch_benchmark(suggested_prompts: List[str], prompt_template: str,
             nonlocal completed
             for prompt in selected_prompts:
                 manipulated = prompt_template.replace("{{user_prompt}}", prompt)
-                
+
                 tasks = [
                     generate_openrouter_response_async(
                         available_models[m]["id"],
@@ -282,16 +286,17 @@ def display_batch_benchmark(suggested_prompts: List[str], prompt_template: str,
                 status_text.text(f"Generating: {prompt[:60]}…")
                 results = await asyncio.gather(*tasks)
 
-                for model_name, result in zip(selected_models, results):
+                for model_name, result in zip(selected_models, results, strict=False):
                     # Run auto-tests if enabled and queries exist
                     tr = None
                     if run_auto_tests and prompt in test_queries and "error" not in result:
                         clean_code = extract_prolog_code(result["text"])
                         status_text.text(f"Testing: {model_name} × {prompt[:40]}…")
                         tr = _run_test_queries(
-                            clean_code, test_queries[prompt],
+                            clean_code,
+                            test_queries[prompt],
                         )
-                    
+
                     row = _build_metrics_row(prompt, model_name, result, test_results=tr)
                     all_rows.append(row)
                     completed += 1
@@ -311,7 +316,6 @@ def display_batch_benchmark(suggested_prompts: List[str], prompt_template: str,
 
     all_rows = st.session_state.batch_results
     selected_models_display = st.session_state.batch_result_models
-    selected_prompts_display = st.session_state.batch_result_prompts
     has_tests = any("tests_passed" in r for r in all_rows)
 
     st.divider()
@@ -358,15 +362,17 @@ def display_batch_benchmark(suggested_prompts: List[str], prompt_template: str,
                     if r.get("status") == "error":
                         st.error(r.get("error", "Unknown error"))
                         continue
-                    
+
                     m_cols = st.columns(3)
                     m_cols[0].metric("Time", f"{r['time_s']}s")
                     m_cols[1].metric("Readability", r["readability"])
                     m_cols[2].metric("LOC", r["loc"])
-                    st.caption(f"Tokens: {r['tokens_in']}/{r['tokens_out']} · Predicates: {r['predicates']} · Clauses: {r['clauses']} · Recursion: {'✓' if r['recursion'] else '✗'}")
+                    st.caption(
+                        f"Tokens: {r['tokens_in']}/{r['tokens_out']} · Predicates: {r['predicates']} · Clauses: {r['clauses']} · Recursion: {'✓' if r['recursion'] else '✗'}"
+                    )
                     if r.get("builtins"):
                         st.caption(f"Built-ins: {r['builtins']}")
-                    
+
                     # Auto-test results
                     if "test_results" in r and r["test_results"]:
                         passed = r["tests_passed"]
@@ -389,11 +395,11 @@ def display_batch_benchmark(suggested_prompts: List[str], prompt_template: str,
                             elif t.get("error"):
                                 label += f" → {t['error'][:80]}"
                             st.markdown(label)
-                    
+
                     # Generated code
                     with st.container(height=300):
                         st.code(r["code"], language="prolog")
-                    
+
                     # Ad-hoc query input
                     safe_key = f"p{p_idx}_m{col_idx}"
                     adhoc_query = st.text_input(
@@ -404,7 +410,8 @@ def display_batch_benchmark(suggested_prompts: List[str], prompt_template: str,
                     if st.button("Run", key=f"adhoc_run_{safe_key}"):
                         if adhoc_query:
                             adhoc_results = _run_test_queries(
-                                r["code"], [adhoc_query],
+                                r["code"],
+                                [adhoc_query],
                             )
                             t = adhoc_results[0]
                             if t["passed"]:
