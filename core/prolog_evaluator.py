@@ -32,13 +32,18 @@ def run_prolog_query(query: str, file_path: str, session_id: str = "default") ->
             
         dangerous_patterns = [
             r'\bshell\(', r'\bsystem\(',                # OS commands
+            r'\bprocess_create\(', r'\bwin_exec\(',      # Process spawning
             r'\bopen\(', r'\bclose\(',                  # File I/O
             r'\bdelete_file\(', r'\brename_file\(',     # File manipulation
+            r'\bread_term\(',                            # Reading arbitrary terms
             r'\bhalt\b', r'\babort\b',                  # App termination
             r'use_module\(library\(process\)\)',        # External processes
             r'use_module\(library\(filesex\)\)',        # Extended file ops
-            r'\basserta\(', r'\bassertz\(',             # Dynamic db manipulation (can be risky)
-            r'\bretract\(', r'\bretractall\('           # Dynamic db manipulation
+            r'\bassert\(', r'\basserta\(', r'\bassertz\(',  # Dynamic DB (includes legacy assert/1)
+            r'\bretract\(', r'\bretractall\(',          # Dynamic DB manipulation
+            r'\bcatch\(',                                # Error swallowing — can mask dangerous ops
+            r'\bchar_code\(', r'\batom_codes\(',        # Dynamic command construction
+            r'\bload_files\(',                           # Loading arbitrary files
         ]
         
         for pattern in dangerous_patterns:
