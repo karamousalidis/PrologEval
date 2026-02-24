@@ -4,3 +4,4 @@ paths:
   evaluation_prompt: "prompts/evaluation_prompt.txt"
   generated_code: "temp/generated_code.pl"
   models_xml: "config/models.xml"
+  test_queries: "prompts/test_queries.yaml"

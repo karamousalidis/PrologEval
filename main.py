@@ -49,6 +49,9 @@ try:
     evaluation_file_path = paths.get("evaluation_prompt", "evaluation_prompt.txt")
     evaluation_template = utils.load_text_from_file(evaluation_file_path)
     
+    test_queries_path = paths.get("test_queries", "prompts/test_queries.yaml")
+    test_queries = utils.load_test_queries(test_queries_path)
+    
     base_generated_code_path = paths.get("generated_code", "generated_code.pl")
     # Create session-specific filename
     filename, ext = os.path.splitext(base_generated_code_path)
@@ -62,14 +65,19 @@ st.title("Evaluating Gen. AI tools for logic programming")
 
 ui.display_sidebar()
 
-user_prompt, manipulated_prompt = ui.display_user_input(suggested_prompts, prompt_template)
+mode = st.radio("Mode", ["Single Prompt", "Batch Benchmark"], horizontal=True, key="app_mode")
 
-selected_models = ui.display_model_selection(available_models, update_models)
+if mode == "Single Prompt":
+    user_prompt, manipulated_prompt = ui.display_user_input(suggested_prompts, prompt_template)
 
-ui.handle_generation(user_prompt, manipulated_prompt, selected_models, available_models, generated_code_path)
+    selected_models = ui.display_model_selection(available_models, update_models)
 
-ui.display_metrics_and_output()
+    ui.handle_generation(user_prompt, manipulated_prompt, selected_models, available_models, generated_code_path)
 
-ui.display_test_generated_code(generated_code_path)
+    ui.display_metrics_and_output()
 
-ui.handle_evaluation(evaluation_template, available_models, update_models)
+    ui.display_test_generated_code(generated_code_path)
+
+    ui.handle_evaluation(evaluation_template, available_models, update_models)
+else:
+    ui.display_batch_benchmark(suggested_prompts, prompt_template, available_models, test_queries)

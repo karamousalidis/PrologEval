@@ -6,6 +6,7 @@ A Streamlit-based dashboard for evaluating how well various Generative AI models
 
 - **Side-by-Side Comparison**: Select up to **2 models** simultaneously. Outputs, metrics, and test results are displayed in parallel columns for instant comparison.
 - **Async Generation**: When comparing two models, API calls are dispatched concurrently via `asyncio` for faster results.
+- **Batch Benchmark Mode**: Switch to **Batch Benchmark** to run all suggested prompts (or a custom selection) against any number of models in one go. Includes automatic correctness testing via predefined queries (`prompts/test_queries.yaml`), ad-hoc query inputs per cell, a summary matrix with test pass rates, and Markdown/CSV export.
 - **Multi-Model Support**: All models are routed through the OpenRouter API. Add or remove models at any time via the built-in model manager.
 - **Per-Model Parameter Configuration**: Each model can be individually configured with Temperature, Top P, and Max Tokens via the **Configure Parameters** tab in the model manager. Settings persist in `models.xml`.
 - **Detailed Metrics**: Every generation tracks:
@@ -48,10 +49,6 @@ A Streamlit-based dashboard for evaluating how well various Generative AI models
    ```bash
    pip install .
    ```
-   For development tools (pytest, ruff):
-   ```bash
-   pip install -e ".[dev]"
-   ```
 
 4. **Configure Environment Variables**
    Create a `.env` file in the root directory:
@@ -70,13 +67,47 @@ A Streamlit-based dashboard for evaluating how well various Generative AI models
    streamlit run main.py
    ```
 3. Open the URL shown in the terminal.
-4. Enter a custom prompt or choose from the suggested list.
-5. Select 1 or 2 models and click **Generate Output**.
-6. Expand **Code Quality Metrics** to see structural analysis and parameters used.
-7. Test the generated code with Prolog queries directly in the UI.
-8. Optionally evaluate the output using 1 or 2 evaluator models.
-9. Click **Download Comparison Report** to export a full Markdown summary.
-10. Configure per-model parameters via **Manage Models → Configure Parameters**.
+4. Choose a mode at the top: **Single Prompt** or **Batch Benchmark**.
+
+### Single Prompt Mode
+5. Enter a custom prompt or choose from the suggested list.
+6. Select 1 or 2 models and click **Generate Output**.
+7. Expand **Code Quality Metrics** to see structural analysis and parameters used.
+8. Test the generated code with Prolog queries directly in the UI.
+9. Optionally evaluate the output using 1 or 2 evaluator models.
+10. Click **Download Comparison Report** to export a full Markdown summary.
+
+### Batch Benchmark Mode
+5. Select any number of models and prompts (all suggested prompts selected by default).
+6. Toggle **Auto-run predefined test queries** to run correctness tests from `prompts/test_queries.yaml`.
+7. Click **Run Benchmark** — models execute concurrently per prompt with a live progress bar.
+8. Review the **Results Matrix** (time / tokens / readability / test pass rate per cell).
+9. Expand individual prompts for detailed per-model metrics, code, and ad-hoc query testing.
+10. Export results as **Markdown** or **CSV**.
+
+## Query Testing Architecture
+
+The application uses two different Prolog execution strategies depending on the mode:
+
+### Single/Dual Mode — In-process via PySwip
+
+Queries run inside a **shared global SWI-Prolog instance** via PySwip. Predicate isolation is achieved by regex-based name-prefixing (e.g. `fibonacci/2` → `sess_abc123_fibonacci/2`). This is fast (no process overhead) but can be fragile with complex multi-predicate programs where the regex misses internal cross-references.
+
+### Batch Mode — Isolated `swipl` subprocesses
+
+Each query spawns a **fresh `swipl` process** with its own clean namespace:
+
+```
+code + query → swipl -q -g "consult('file.pl'), query, halt" → stdout → PASS/FAIL
+```
+
+This eliminates namespace collisions, built-in predicate clashes, and regex fragility at the cost of ~100ms subprocess overhead per query.
+
+| | Single/Dual Mode | Batch Mode |
+|---|---|---|
+| **Engine** | PySwip (in-process) | `swipl` subprocess |
+| **Isolation** | Regex name-mangling | Process-level |
+| **Predefined queries** | ❌ Manual only | ✅ Auto from `test_queries.yaml` |
 
 ## Project Structure
 
@@ -91,7 +122,8 @@ PrologEval/
 │   ├── sidebar.py            #   Session history sidebar
 │   ├── code_generation.py    #   Prompt input, model management, generation, metrics & reports
 │   ├── evaluation.py         #   AI-based code evaluation with dual evaluator support
-│   └── testing.py            #   Live Prolog query testing via PySwip
+│   ├── testing.py            #   Live Prolog query testing via PySwip
+│   └── batch.py              #   Batch benchmark: matrix comparison, subprocess testing, CSV/MD export
 ├── config/                   # Configuration
 │   ├── config.yaml           #   Centralized path settings
 │   └── models.xml            #   Model mappings & per-model parameters
@@ -100,7 +132,8 @@ PrologEval/
 ├── prompts/                  # LLM prompt templates
 │   ├── prompt.txt            #   Suggested prompts for the UI
 │   ├── modified_prompt.txt   #   Wrapper template for user input
-│   └── evaluation_prompt.txt #   Template for AI-based code evaluation
+│   ├── evaluation_prompt.txt #   Template for AI-based code evaluation
+│   └── test_queries.yaml     #   Predefined test queries for batch auto-testing
 ├── temp/                     # Session-specific generated .pl files
 ├── main.py                   # Entry point
 ├── pyproject.toml            # Project metadata & dependencies

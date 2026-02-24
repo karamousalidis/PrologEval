@@ -39,10 +39,10 @@ def display_sidebar() -> None:
                         file_name=f"generated_code_{model_name.replace(' ', '_')}_{len(st.session_state.history) - i}.pl",
                         mime="text/plain",
                         key=f"dl_btn_{i}_{model_name}",
-                        use_container_width=True
+                        width="stretch"
                     )
         
         st.sidebar.divider()
-        if st.sidebar.button("Clear History", use_container_width=True):
+        if st.sidebar.button("Clear History", width="stretch"):
             st.session_state.history = []
             st.rerun()

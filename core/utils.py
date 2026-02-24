@@ -67,3 +67,15 @@ def load_suggested_prompts(file_path: str) -> List[str]:
         return prompts
     except FileNotFoundError as e:
         raise FileNotFoundError(f"Error: Suggested prompts file '{file_path}' not found.") from e
+
+def load_test_queries(file_path: str) -> Dict[str, List[str]]:
+    """Loads predefined test queries from a YAML file. Returns a dict mapping prompt → list of queries."""
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or []
+        return {entry["prompt"]: entry.get("queries", []) for entry in data if "prompt" in entry}
+    except FileNotFoundError:
+        return {}
+    except (yaml.YAMLError, TypeError):
+        return {}
+
