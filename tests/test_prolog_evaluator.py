@@ -117,7 +117,7 @@ class TestRunPrologQuery:
         """Dangerous code should be blocked before Prolog ever sees it."""
         from core.prolog_evaluator import run_prolog_query
 
-        success, results, error = run_prolog_query("run.", dangerous_file)
+        success, results, error, metrics = run_prolog_query("run.", dangerous_file)
 
         assert success is False
         assert "Security Alert" in error
@@ -130,7 +130,7 @@ class TestRunPrologQuery:
         with patch("core.prolog_evaluator._prolog_instance", mock_prolog):
             from core.prolog_evaluator import run_prolog_query
 
-            success, results, error = run_prolog_query("bar(X).", prolog_file, skip_prefix=True)
+            success, results, error, metrics = run_prolog_query("bar(X).", prolog_file, skip_prefix=True)
 
         assert success is True
         assert error is None
@@ -143,7 +143,7 @@ class TestRunPrologQuery:
         with patch("core.prolog_evaluator._prolog_instance", mock_prolog):
             from core.prolog_evaluator import run_prolog_query
 
-            success, results, error = run_prolog_query("bar(X).", prolog_file, skip_prefix=True)
+            success, results, error, metrics = run_prolog_query("bar(X).", prolog_file, skip_prefix=True)
 
         assert success is False
         assert "existence_error" in error
