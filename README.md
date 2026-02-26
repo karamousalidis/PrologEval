@@ -16,11 +16,13 @@ A Streamlit-based dashboard for evaluating how well various Generative AI models
   - **Token Usage**: Input and output token counts.
   - **Readability**: Flesch Reading Ease score for generated Prolog comments using `textstat`.
 - **Code Quality Metrics**: Static analysis of generated Prolog code, displayed in a collapsible panel:
-  - Lines of Code, Predicate Count, Clause Count, Comment Ratio, Recursion Detection
-  - **Built-in Predicate Detection**: Dynamically queries SWI-Prolog for its full built-in predicate catalog at startup, then reports which standard library predicates the model used vs reimplemented.
+  - Lines of Code, Predicate Count, Comment Ratio, Recursion Detection
+  - **Logical Formatting Metrics**: Clause Count, Average Subgoals per Rule, and Left Recursion warning limits.
+  - **Built-in Predicate Detection**: Dynamically queries SWI-Prolog for its full built-in catalog at startup, reporting standard library usage.
   - Model parameters used for generation are displayed inline.
 - **Export Comparison Report**: Download a structured Markdown report with all metrics, model parameters, code quality analysis, generated code, and evaluation results.
 - **Live Prolog Testing**: Run Prolog queries directly from the UI using `pyswip`. Each model's output gets its own independent query input and results area.
+  - **Dynamic Engine Profiling**: Every executed query accurately captures execution metrics directly from SWI-Prolog's engine (Execution Time, Logical Inferences, LIPS, and Byte Memory Stack usage).
 - **Dual Evaluator Support**: Select up to 2 evaluator models to assess the generated code side-by-side, with async concurrent evaluation.
 - **Static Analysis Security**: Generated code is scanned for dangerous patterns (shell commands, file I/O, `halt`, etc.) before execution — blocking unsafe operations while allowing standard Prolog I/O.
 - **Session History**: A collapsible sidebar logs all prompts, models, and metrics. Download any past output as a `.pl` file.
@@ -141,9 +143,9 @@ Jobs run sequentially (Lint → Tests → Docker). If linting fails, tests and D
 5. Select any number of models and prompts (all suggested prompts selected by default).
 6. Toggle **Auto-run predefined test queries** to run correctness tests from `prompts/test_queries.yaml`.
 7. Click **Run Benchmark** — models execute concurrently per prompt with a live progress bar.
-8. Review the **Results Matrix** (time / tokens / readability / test pass rate per cell).
-9. Expand individual prompts for detailed per-model metrics, code, and ad-hoc query testing.
-10. Export results as **Markdown** or **CSV**.
+8. Review the **Results Matrix** (time / tokens / readbility / test pass rate and average **LIPS** per cell).
+9. Expand individual prompts for detailed per-model metrics, code, execution performance profiling profiling, and ad-hoc query testing.
+10. Export results as **Markdown** or **CSV** (which now bundles code quality and PySwip metrics).
 
 ## Query Testing Architecture
 
@@ -155,10 +157,10 @@ Queries run inside a **shared global SWI-Prolog instance** via PySwip. Predicate
 
 ### Batch Mode — Isolated `swipl` subprocesses
 
-Each query spawns a **fresh `swipl` process** with its own clean namespace:
+Each query spawns a **fresh `swipl` process** with its own clean namespace. Within this subprocess, standard Prolog timing checks are run (`statistics/2` engine) and printed to standard-output to safely extract execution performance and Logical Inferences metrics back to the Streamlit UI frame.
 
 ```
-code + query → swipl -q -g "consult('file.pl'), query, halt" → stdout → PASS/FAIL
+code + query → swipl -q -g "consult(...), statistics(...), query, statistics(...), halt" → stdout → PARSED METRICS
 ```
 
 This eliminates namespace collisions, built-in predicate clashes, and regex fragility at the cost of ~100ms subprocess overhead per query.
@@ -167,6 +169,7 @@ This eliminates namespace collisions, built-in predicate clashes, and regex frag
 |---|---|---|
 | **Engine** | PySwip (in-process) | `swipl` subprocess |
 | **Isolation** | Regex name-mangling | Process-level |
+| **Profiling** | Exact Runtime Delta | Process Stdout Regex |
 | **Predefined queries** | ❌ Manual only | ✅ Auto from `test_queries.yaml` |
 
 ## Project Structure
