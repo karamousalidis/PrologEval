@@ -4,3 +4,6 @@ Define a Prolog predicate fibonacci/2 that calculates the Nth Fibonacci number.
 Implement a Prolog predicate reverse_list/2 to reverse a list.
 Define a Prolog predicate sum_list/2 that calculates the sum of a list of numbers.
 Write a Prolog predicate to find the maximum element in a list.
+Solve the SEND + MORE = MONEY cryptarithmetic puzzle in Prolog. Create a predicate solve_money([S,E,N,D,M,O,R,Y]) that binds the letters to distinct digits from 0 to 9.
+Implement a Prolog predicate encode(List, Encoded) that performs run-length encoding on a list. For example, [a,a,a,b,b,c] becomes [[3,a], [2,b], [1,c]].
+Write a Prolog predicate quicksort(List, Sorted) that sorts a list of numbers using the QuickSort algorithm. Include the partition/4 helper predicate.

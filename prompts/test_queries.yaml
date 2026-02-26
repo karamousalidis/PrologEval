@@ -37,3 +37,19 @@
     - "max_list([1], X)"
     - "max_list([3,1,4,1,5,9], X)"
     - "max_list([10,20,5], X)"
+
+- prompt: "Solve the SEND + MORE = MONEY cryptarithmetic puzzle in Prolog. Create a predicate solve_money([S,E,N,D,M,O,R,Y]) that binds the letters to distinct digits from 0 to 9."
+  queries:
+    - "solve_money([S,E,N,D,M,O,R,Y]), S \\= 0, M \\= 0"
+
+- prompt: "Implement a Prolog predicate encode(List, Encoded) that performs run-length encoding on a list. For example, [a,a,a,b,b,c] becomes [[3,a], [2,b], [1,c]]."
+  queries:
+    - "encode([a,a,a,a,b,c,c,a,a,d,e,e,e,e], X)"
+    - "encode([], X)"
+    - "encode([x], X)"
+
+- prompt: "Write a Prolog predicate quicksort(List, Sorted) that sorts a list of numbers using the QuickSort algorithm. Include the partition/4 helper predicate."
+  queries:
+    - "quicksort([5,3,7,1,9,2,0,4], X)"
+    - "quicksort([], X)"
+    - "quicksort([10,10,10,10], X)"
