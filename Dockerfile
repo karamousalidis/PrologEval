@@ -6,11 +6,14 @@ RUN apt-get update && \
 
 WORKDIR /app
 
+# Install uv directly from the official image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 # Copy everything first
 COPY . .
 
-# Then install
-RUN pip install --no-cache-dir .
+# Then install using uv system-wide
+RUN uv pip install --system --no-cache .
 
 RUN mkdir -p temp
 

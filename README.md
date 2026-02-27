@@ -43,15 +43,16 @@ A Streamlit-based dashboard for evaluating how well various Generative AI models
    git clone <repo-url> && cd PrologEval
    ```
 
-2. **Create a Virtual Environment**
+2. **Create a Virtual Environment & Install Dependencies**
+   It is highly recommended to use [`uv`](https://docs.astral.sh/uv/getting-started/installation/) instead of standard `pip` for lightning-fast resolution and installation.
    ```bash
-   python3 -m venv .venv
+   uv venv
    source .venv/bin/activate
    ```
 
 3. **Install Dependencies**
    ```bash
-   pip install .
+   uv pip install .
    ```
 
 4. **Configure Environment Variables**
@@ -91,17 +92,17 @@ The `core/` backend logic translates into a fully mocked `pytest` suite (no SWI-
 
 1. Install the development dependencies and setup git hooks:
    ```bash
-   pip install -e ".[dev]"
+   uv pip install -e ".[dev]"
    pre-commit install
    ```
 2. Run the test suite:
    ```bash
-   pytest tests/ -v
+   uv run pytest tests/ -v
    ```
 3. Format and lint the code:
    ```bash
-   ruff format .
-   ruff check . --fix
+   uv run ruff format .
+   uv run ruff check . --fix
    ```
 
 ## CI/CD
@@ -124,7 +125,7 @@ Jobs run sequentially (Lint → Tests → Docker). If linting fails, tests and D
    ```
 2. Start the application:
    ```bash
-   streamlit run main.py
+   uv run streamlit run main.py
    ```
 3. Open the URL shown in the terminal.
 4. Choose a mode at the top: **Single Prompt** or **Batch Benchmark**.
