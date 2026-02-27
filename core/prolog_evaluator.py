@@ -48,7 +48,7 @@ def unload_prolog_file(file_path: str) -> None:
 
 def run_prolog_query(
     query: str, file_path: str, session_id: str = "default", skip_prefix: bool = False
-) -> Tuple[bool, List[Union[Dict[str, Any], str]], Optional[str]]:
+) -> Tuple[bool, List[Union[Dict[str, Any], str]], Optional[str], Optional[Dict[str, Any]]]:
     """
     Consults the file and runs a query via the sandbox.
     When skip_prefix is True, predicates are NOT prefixed (useful when file-level isolation is enough).
@@ -63,7 +63,7 @@ def run_prolog_query(
         for pattern in DANGEROUS_PATTERNS:
             if re.search(pattern, code, re.IGNORECASE):
                 logging.warning(f"Security Alert: Blocked execution due to pattern {pattern}")
-                return False, [], "Security Alert: Dangerous system or file operation found in generated code."
+                return False, [], "Security Alert: Dangerous system or file operation found in generated code.", None
 
         if skip_prefix:
             # Consult the file directly — no predicate rewriting
@@ -106,10 +106,29 @@ def run_prolog_query(
             final_query = re.sub(r"^([a-z][a-zA-Z0-9_]*)", rf"{prefix}\1", clean_query)
 
         # 5. Execute actual query directly
+        stats_query = "statistics(cputime, T), statistics(inferences, I), statistics(localused, L), statistics(globalused, G), statistics(trailused, Tr)"
+        stats_before_list = list(_prolog_instance.query(stats_query))
+        stats_before = stats_before_list[0] if stats_before_list else {"T": 0, "I": 0, "L": 0, "G": 0, "Tr": 0}
+
         results = list(_prolog_instance.query(final_query))
 
-        return True, results, None
+        stats_after_list = list(_prolog_instance.query(stats_query))
+        stats_after = stats_after_list[0] if stats_after_list else {"T": 0, "I": 0, "L": 0, "G": 0, "Tr": 0}
+
+        cputime_delta = max(0, stats_after.get("T", 0) - stats_before.get("T", 0))
+        inferences_delta = max(0, stats_after.get("I", 0) - stats_before.get("I", 0))
+
+        metrics = {
+            "cputime": cputime_delta,
+            "inferences": inferences_delta,
+            "lips": (inferences_delta / cputime_delta) if cputime_delta > 0 else 0,
+            "local_stack_used_bytes": stats_after.get("L", 0) - stats_before.get("L", 0),
+            "global_stack_used_bytes": stats_after.get("G", 0) - stats_before.get("G", 0),
+            "trail_stack_used_bytes": stats_after.get("Tr", 0) - stats_before.get("Tr", 0),
+        }
+
+        return True, results, None, metrics
 
     except Exception as e:
         logging.error(f"Error executing Prolog query: {e}", exc_info=True)
-        return False, [], str(e)
+        return False, [], str(e), None

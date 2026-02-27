@@ -84,3 +84,50 @@ def load_test_queries(file_path: str) -> Dict[str, List[str]]:
         return {}
     except (yaml.YAMLError, TypeError):
         return {}
+
+
+def analyze_prolog_code(code: str) -> Dict[str, Any]:
+    """Analyzes Prolog code for basic complexity metrics."""
+    import re
+
+    # Remove strings and comments for more accurate counting
+    code_no_comments = re.sub(r"%.*$", "", code, flags=re.MULTILINE)
+    code_no_strings = re.sub(r"'.*?'", "''", code_no_comments)
+    code_no_strings = re.sub(r"\".*?\"", '""', code_no_strings)
+
+    # Clause Count
+    # Count periods that end a clause
+    clauses = [c.strip() for c in code_no_strings.split(".") if c.strip()]
+    clause_count = len(clauses)
+
+    subgoals_total = 0
+    left_recursion_count = 0
+
+    for clause in clauses:
+        # Check if clause is a rule (contains ':-')
+        if ":-" in clause:
+            parts = clause.split(":-", 1)
+            head = parts[0].strip()
+            body = parts[1].strip()
+
+            # Extract functor of head
+            head_match = re.search(r"^([a-z][a-zA-Z0-9_]*)", head)
+            head_functor = head_match.group(1) if head_match else ""
+
+            # Rough subgoal count simply counts commas in the body (plus one for the first goal)
+            subgoals = body.split(",")
+            subgoals_total += len(subgoals)
+
+            # Left recursion check
+            if head_functor and body.startswith(head_functor):
+                first_goal_match = re.search(r"^([a-z][a-zA-Z0-9_]*)", body)
+                if first_goal_match and first_goal_match.group(1) == head_functor:
+                    left_recursion_count += 1
+
+    avg_subgoals = subgoals_total / clause_count if clause_count > 0 else 0.0
+
+    return {
+        "clause_count": clause_count,
+        "average_subgoals": avg_subgoals,
+        "left_recursion_count": left_recursion_count,
+    }
