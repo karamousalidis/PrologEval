@@ -172,7 +172,7 @@ def handle_generation(
 def _render_metrics_and_output_for_model(model_name: str, result: Dict[str, Any]):
     st.markdown(f"### {model_name}")
     cols = st.columns(4)
-    cols[0].metric("Time Taken", f"{result['time_taken']:.2f}s")
+    cols[0].metric("Latency", f"{result['time_taken']:.2f}s")
     cols[1].metric("Tokens (Input/Output)", f"{result['tokens_prompt']}/{result['tokens_completion']}")
 
     r_score = result.get("readability_score", "N/A")

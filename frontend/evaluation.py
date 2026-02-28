@@ -11,7 +11,7 @@ def _render_evaluation_result(gen_model_name: str, evaluator_name: str, eval_res
         st.error(eval_result["error"])
     else:
         eval_cols = st.columns(2)
-        eval_cols[0].metric("Time Taken", f"{eval_result['time_taken']:.2f}s")
+        eval_cols[0].metric("Latency", f"{eval_result['time_taken']:.2f}s")
         eval_cols[1].metric(
             "Tokens (Input/Output)", f"{eval_result['tokens_prompt']}/{eval_result['tokens_completion']}"
         )

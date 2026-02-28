@@ -24,7 +24,7 @@ def display_sidebar() -> None:
                         st.error(res["error"])
                         continue
 
-                    st.write(f"Time Taken: {res.get('time_taken', 0):.2f}s")
+                    st.write(f"Latency: {res.get('time_taken', 0):.2f}s")
                     st.write(f"Tokens: {res.get('tokens_prompt', '?')}/{res.get('tokens_completion', '?')}")
 
                     r_score = res.get("readability_score", "N/A")
